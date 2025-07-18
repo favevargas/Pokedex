@@ -69,7 +69,7 @@ function crearCarta(pokemon, esFavorito = false) {
             </div>
         </div>
     `;
-}
+
 
 
     // Añadir evento al botón de favorito
@@ -82,7 +82,7 @@ function crearCarta(pokemon, esFavorito = false) {
     });
 
     return div;
-
+}
 
 // Función para renderizar Pokémon en el contenedor principal
 function renderizarPokemon(pokemonData) {
@@ -171,3 +171,91 @@ function mostrarFavoritos() {
         }
     }
 }
+
+// Mostrar sección de Pokédex
+function mostrarPokedex() {
+    pokedexContainer.classList.remove('d-none');
+    favoritosContainer.classList.add('d-none');
+    favoritosContainer.classList.remove('active'); // Quitar clase 'active'
+    renderizarPokemon(pokemonMostrados); // Volver a renderizar los Pokémon mostrados en la Pokedex
+}
+
+
+// Event Listeners
+agregarBtn.addEventListener("click", async () => {
+    const pokemon = await obtenerPokemon(contadorPokemon);
+    if (pokemon) {
+        pokemonMostrados.push(pokemon);
+        const carta = crearCarta(pokemon, estaEnFavoritos(pokemon.id));
+        contenedor.appendChild(carta);
+        contadorPokemon++;
+    }
+});
+
+quitarBtn.addEventListener("click", () => {
+    const cartas = contenedor.querySelectorAll(".col");
+    if (cartas.length > 0) {
+        // Añadir clase para la animación de salida
+        const ultimaCarta = cartas[cartas.length - 1];
+        ultimaCarta.classList.add('pokemon-card-remove');
+        ultimaCarta.addEventListener('animationend', () => {
+            ultimaCarta.remove();
+             // Si el Pokémon removido es el último en pokemonMostrados, decrementamos contadorPokemon
+            if (pokemonMostrados.length > 0 && pokemonMostrados[pokemonMostrados.length - 1].id === contadorPokemon - 1) {
+                contadorPokemon--;
+            }
+            // Remover el último Pokémon del array pokemonMostrados
+            pokemonMostrados.pop();
+        }, { once: true }); // Asegura que el evento se dispare solo una vez
+    }
+});
+
+buscarBtn.addEventListener("click", async () => {
+    const valor = buscador.value.toLowerCase().trim();
+    if (!valor) {
+        alert("Por favor, ingresa un nombre o ID para buscar.");
+        return;
+    }
+
+    // Limpiar el contenedor antes de mostrar el resultado de la búsqueda
+    contenedor.innerHTML = '';
+    pokemonMostrados = []; // Limpiar los Pokémon mostrados para solo tener el resultado de la búsqueda
+
+    const pokemon = await obtenerPokemon(valor);
+    if (pokemon) {
+        pokemonMostrados.push(pokemon); // Añadir el Pokémon encontrado al array de mostrados
+        const carta = crearCarta(pokemon, estaEnFavoritos(pokemon.id));
+        contenedor.appendChild(carta);
+    }
+    buscador.value = ''; // Limpiar el input del buscador
+});
+
+filtroTipoSelect.addEventListener("change", (e) => {
+    const tipoSeleccionado = e.target.value;
+    if (tipoSeleccionado === "mostrarPokedex") {
+        mostrarPokedex();
+    } else if (tipoSeleccionado === "mostrarFavoritos") {
+        mostrarFavoritos();
+    } else {
+        mostrarPokedex(); // Asegurarse de que estamos en la pokedex antes de filtrar
+        filtrarPokemonPorTipo(tipoSeleccionado);
+    }
+});
+
+favoritosBtn.addEventListener("click", () => {
+    mostrarFavoritos();
+});
+
+limpiarPokedexBtn.addEventListener("click", () => {
+    if (confirm("¿Estás seguro de que quieres limpiar la Pokédex? Esto eliminará todos los Pokémon mostrados, pero no tus favoritos.")) {
+        contenedor.innerHTML = ''; // Elimina todas las tarjetas del DOM
+        pokemonMostrados = []; // Vacía el array de Pokémon mostrados
+        contadorPokemon = 1; // Reinicia el contador para empezar desde el Pokémon #1
+    }
+});
+
+
+// Cargar algunos Pokémon al iniciar
+document.addEventListener("DOMContentLoaded", () => {
+    cargarPokemonIniciales(9); // Carga los primeros 9 Pokémon al cargar la página
+});
